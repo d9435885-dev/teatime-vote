@@ -120,7 +120,7 @@ const INITIAL_VOTES = {
 
 export default function App() {
   // --- 雲端連線狀態 ---
-  const [fbUser, setFbUser] = useState(null);
+  const [fbUser, setFbUser] = useState<any>(null);
   const [isDbReady, setIsDbReady] = useState(false);
 
   // --- 介面狀態 ---

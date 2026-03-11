@@ -48,7 +48,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = "my-teatime-app";
 
-// 初始選項
 const INITIAL_DRINK_OPTIONS = [
   "烏弄",
   "八曜",
@@ -106,8 +105,6 @@ export default function App() {
   const [newDrinkUrl, setNewDrinkUrl] = useState<string>("");
   const [newFoodName, setNewFoodName] = useState<string>("");
   const [newFoodUrl, setNewFoodUrl] = useState<string>("");
-  const [editingDrink, setEditingDrink] = useState<any>(null);
-  const [editingFood, setEditingFood] = useState<any>(null);
 
   const users = Object.keys(votes);
 
@@ -191,21 +188,51 @@ export default function App() {
     await setDoc(docRef, updates, { merge: true });
   };
 
-  const showAlert = (message: any) =>
-    setDialog({ isOpen: true, type: "alert", message, onConfirm: null });
-  const showConfirm = (message: any, onConfirm: any) =>
-    setDialog({ isOpen: true, type: "confirm", message, onConfirm });
-
   const handleAddUser = async (e: any) => {
     e.preventDefault();
-    const trimmedName = newUserName.trim();
-    if (trimmedName && !votes[trimmedName]) {
-      await updateFirestore({
-        [`votes.${trimmedName}`]: { drinks: [], foods: [] },
-      });
-      setCurrentUser(trimmedName);
+    const name = newUserName.trim();
+    if (name && !votes[name]) {
+      await updateFirestore({ [`votes.${name}`]: { drinks: [], foods: [] } });
+      setCurrentUser(name);
       setNewUserName("");
     }
+  };
+
+  const toggleVote = async (category: any, option: any) => {
+    if (!currentUser) return;
+    const userVotes = votes[currentUser]?.[category] || [];
+    const updated = userVotes.includes(option)
+      ? userVotes.filter((i: any) => i !== option)
+      : [...userVotes, option];
+    await updateFirestore({ [`votes.${currentUser}.${category}`]: updated });
+  };
+
+  const handleDrinkSubmit = async (e: any) => {
+    e.preventDefault();
+    const name = newDrinkName.trim();
+    if (!name) return;
+    const newUrls = { ...optionUrls };
+    if (newDrinkUrl.trim()) newUrls[name] = newDrinkUrl.trim();
+    await updateFirestore({
+      drinkOptions: [...drinkOptions, name],
+      optionUrls: newUrls,
+    });
+    setNewDrinkName("");
+    setNewDrinkUrl("");
+  };
+
+  const handleFoodSubmit = async (e: any) => {
+    e.preventDefault();
+    const name = newFoodName.trim();
+    if (!name) return;
+    const newUrls = { ...optionUrls };
+    if (newFoodUrl.trim()) newUrls[name] = newFoodUrl.trim();
+    await updateFirestore({
+      foodOptions: [...foodOptions, name],
+      optionUrls: newUrls,
+    });
+    setNewFoodName("");
+    setNewFoodUrl("");
   };
 
   const calculateTotals = (category: any, options: any) => {
@@ -257,86 +284,27 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
-      {dialog.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-            <AlertCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-            <p className="mb-6">{dialog.message}</p>
-            <div className="flex gap-3">
-              {dialog.type === "confirm" && (
-                <button
-                  onClick={() => setDialog({ isOpen: false })}
-                  className="flex-1 py-2 border rounded-lg"
-                >
-                  取消
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  dialog.onConfirm?.();
-                  setDialog({ isOpen: false });
-                }}
-                className="flex-1 py-2 bg-emerald-600 text-white rounded-lg"
-              >
-                確定
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 標題與看板 */}
       <div className="bg-white border-b shadow-sm p-6">
-        <div className="max-w-5xl mx-auto flex justify-between items-start">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              🎨 {headerConfig.department}
-            </h1>
+            <h1 className="text-2xl font-bold">🎨 {headerConfig.department}</h1>
             <h2 className="text-lg text-slate-600 mt-1">
               🍰 {headerConfig.eventName}
             </h2>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowHistoryModal(true)}
-              className="p-2 hover:bg-slate-100 rounded-lg"
-            >
-              <History className="w-5 h-5 text-slate-500" />
-            </button>
-            <button
-              onClick={() => setIsEditingHeader(true)}
-              className="p-2 hover:bg-slate-100 rounded-lg"
-            >
-              <Settings className="w-5 h-5 text-slate-500" />
-            </button>
-          </div>
-        </div>
-
-        {/* 看板區 */}
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-sky-50 p-4 rounded-xl border border-sky-100">
-            <p className="text-xs font-bold text-sky-700 flex items-center gap-1">
-              <Crown className="w-3 h-3" /> 飲料領先
-            </p>
-            <p className="text-sm font-bold truncate mt-1">
-              {topDrinks.items.join(", ") || "尚未投票"}
-            </p>
-          </div>
-          <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
-            <p className="text-xs font-bold text-orange-700 flex items-center gap-1">
-              <Crown className="w-3 h-3" /> 餐點領先
-            </p>
-            <p className="text-sm font-bold truncate mt-1">
-              {topFoods.items.join(", ") || "尚未投票"}
-            </p>
-          </div>
-          <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
-            <p className="text-xs font-bold text-slate-600">
-              尚未投票 ({unvotedUsers.length}人)
-            </p>
-            <p className="text-sm font-bold truncate mt-1">
-              {unvotedUsers.join(", ") || "皆已完成 🎉"}
-            </p>
+          <div className="flex gap-4 text-center">
+            <div className="bg-sky-50 p-2 px-4 rounded-lg border border-sky-100">
+              <p className="text-xs font-bold text-sky-700">🥤 飲料領先</p>
+              <p className="text-sm font-bold truncate max-w-[150px]">
+                {topDrinks.items.join(", ") || "尚未投票"}
+              </p>
+            </div>
+            <div className="bg-orange-50 p-2 px-4 rounded-lg border border-orange-100">
+              <p className="text-xs font-bold text-orange-700">🍗 餐點領先</p>
+              <p className="text-sm font-bold truncate max-w-[150px]">
+                {topFoods.items.join(", ") || "尚未投票"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -410,7 +378,7 @@ export default function App() {
                       <div
                         key={d}
                         onClick={() => toggleVote("drinks", d)}
-                        className={`relative group p-3 rounded-lg border-2 text-sm font-bold cursor-pointer transition-all ${
+                        className={`relative p-3 rounded-lg border-2 text-sm font-bold cursor-pointer transition-all ${
                           votes[currentUser]?.drinks?.includes(d)
                             ? "border-sky-500 bg-sky-50 text-sky-700"
                             : "border-slate-100 text-slate-500"
@@ -432,7 +400,7 @@ export default function App() {
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute top-2 right-2 text-sky-400 hover:text-sky-600"
+                            className="absolute top-2 right-2"
                           >
                             <ExternalLink className="w-3 h-3" />
                           </a>
@@ -451,7 +419,7 @@ export default function App() {
                       <div
                         key={f}
                         onClick={() => toggleVote("foods", f)}
-                        className={`relative group p-3 rounded-lg border-2 text-sm font-bold cursor-pointer transition-all ${
+                        className={`relative p-3 rounded-lg border-2 text-sm font-bold cursor-pointer transition-all ${
                           votes[currentUser]?.foods?.includes(f)
                             ? "border-orange-500 bg-orange-50 text-orange-700"
                             : "border-slate-100 text-slate-500"
@@ -473,7 +441,7 @@ export default function App() {
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute top-2 right-2 text-orange-400 hover:text-orange-600"
+                            className="absolute top-2 right-2"
                           >
                             <ExternalLink className="w-3 h-3" />
                           </a>
@@ -486,13 +454,13 @@ export default function App() {
             )}
           </div>
         ) : (
-          <div className="space-y-8">
-            <div className="bg-white rounded-xl border overflow-hidden">
-              <div className="bg-sky-50 p-4 border-b font-bold text-sky-800">
-                飲料統計
-              </div>
+          <div className="bg-white rounded-xl border overflow-hidden">
+            <div className="bg-slate-50 p-4 border-b font-bold">
+              飲料統計總表
+            </div>
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <tr className="bg-slate-50 border-b">
+                <tr className="bg-slate-100 border-b">
                   <th className="p-3 text-left">姓名</th>
                   {drinkOptions.map((o) => (
                     <th key={o} className="p-3 text-center">

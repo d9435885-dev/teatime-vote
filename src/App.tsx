@@ -135,12 +135,12 @@ export default function App() {
   });
 
   // --- 雲端同步的資料狀態 ---
-  const [votes, setVotes] = useState({});
-  const [headerConfig, setHeaderConfig] = useState({});
-  const [drinkOptions, setDrinkOptions] = useState([]);
-  const [foodOptions, setFoodOptions] = useState([]);
-  const [optionUrls, setOptionUrls] = useState({});
-  const [historyRecords, setHistoryRecords] = useState([]);
+  const [votes, setVotes] = useState<any>({});
+  const [headerConfig, setHeaderConfig] = useState<any>({});
+  const [drinkOptions, setDrinkOptions] = useState<any[]>([]);
+  const [foodOptions, setFoodOptions] = useState<any[]>([]);
+  const [optionUrls, setOptionUrls] = useState<any>({});
+  const [historyRecords, setHistoryRecords] = useState<any[]>([]);
 
   // --- 編輯專用的暫存狀態 ---
   const [tempHeaderConfig, setTempHeaderConfig] = useState({});

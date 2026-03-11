@@ -234,7 +234,7 @@ export default function App() {
     const unsubHistory = onSnapshot(
       historyColRef,
       (snapshot) => {
-        const records = [];
+        const records: any[] = [];
         snapshot.forEach((doc) => records.push({ id: doc.id, ...doc.data() }));
         records.sort((a, b) => b.timestamp - a.timestamp); // 依時間新到舊排序
         setHistoryRecords(records);

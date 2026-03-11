@@ -249,7 +249,7 @@ export default function App() {
   }, [fbUser]);
 
   // 更新雲端資料的共用函數
-  const updateFirestore = async (updates) => {
+  const updateFirestore = async (updates: any) => {
     if (!fbUser || !db) return;
     const docRef = doc(
       db,
@@ -313,7 +313,7 @@ export default function App() {
     );
   };
 
-  const loadHistory = (record) => {
+  const loadHistory = (record: any) => {
     showConfirm(
       `確定要載入「${record.name}」嗎？\n⚠️ 這會覆蓋所有人當前畫面上的資料！`,
       async () => {
@@ -330,7 +330,7 @@ export default function App() {
     );
   };
 
-  const deleteHistory = (id, e) => {
+  const deleteHistory = (id: any, e: any) => {
     e.stopPropagation();
     showConfirm("確定要永久刪除這筆歷史紀錄嗎？(無法復原)", async () => {
       const docRef = doc(
@@ -370,7 +370,7 @@ export default function App() {
   };
 
   // --- 投票與名單功能 ---
-  const toggleVote = async (category, option) => {
+  const toggleVote = async (category: any, option: any) => {
     if (!currentUser) return;
     const userVotes = votes[currentUser][category];
     const updatedCategoryVotes = userVotes.includes(option)
